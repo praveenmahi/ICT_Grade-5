@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fix The Document Game</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    text-align: center;
+}
+
+.container {
+    max-width: 750px;
+    margin: auto;
+    padding: 20px;
+}
+
+h1 {
+    font-size: clamp(24px, 5vw, 42px);
+}
+
+#doc {
+    background: white;
+    color: black;
+    padding: 20px;
+    border-radius: 12px;
+    margin: 20px 0;
+    text-align: left;
+    font-size: clamp(14px, 2.5vw, 18px);
+    line-height: 1.2;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.btn {
+    display: block;
+    width: 100%;
+    margin: 10px 0;
+    padding: 14px;
+    font-size: clamp(16px, 3.5vw, 20px);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    background: white;
+    color: black;
+    transition: 0.3s;
+}
+
+.btn:active {
+    transform: scale(0.97);
+    background: #ffe066;
+}
+
+#score {
+    font-size: 20px;
+}
+
+#restart {
+    display: none;
+    padding: 12px 20px;
+    font-size: clamp(16px, 4vw, 22px);
+    background: red;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+#startScreen {
+    margin-top: 50px;
+}
+
+canvas {
+    position: fixed;
+    top:0;
+    left:0;
+    pointer-events:none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>📝 Fix The Document</h1>
+
+    <!-- START SCREEN -->
+    <div id="startScreen">
+        <button class="btn" onclick="startGame()">▶ Start Game</button>
+    </div>
+
+    <!-- GAME AREA -->
+    <div id="gameArea" style="display:none;">
+        <div id="score">Score: 0</div>
+
+        <div id="doc">
+            <b>WRONG DOCUMENT</b><br><br>
+            (No header)<br><br>
+            this is a sample text with bad formatting. spacing is wrong.<br><br>
+            text is not aligned properly<br><br>
+            (No footer)
+        </div>
+
+        <div id="actions"></div>
+
+        <button id="restart" onclick="restartGame()">Restart</button>
+    </div>
+
+</div>
+
+<canvas id="confetti"></canvas>
+
+<script>
+let score = 0;
+let step = 0;
+
+// ✅ External Sounds
+const correctSound = new Audio("correct.mp3");
+const wrongSound = new Audio("wrong.mp3");
+
+function playSound(type){
+    if(type === "correct"){
+        correctSound.currentTime = 0;
+        correctSound.play();
+    } else {
+        wrongSound.currentTime = 0;
+        wrongSound.play();
+    }
+}
+
+// Steps
+const steps = [
+
+    {
+        q:"Add proper Header (not title in body)",
+        options:["Add Header","Write title in text","Increase font size"],
+        answer:0,
+        action:()=>{
+            let doc = document.getElementById("doc");
+            doc.innerHTML = doc.innerHTML.replace("(No header)<br><br>", "");
+            doc.innerHTML = "<div style='text-align:center; font-weight:bold; font-size:20px;'>My Document</div><hr>" + doc.innerHTML;
+        }
+    },
+
+    {
+        q:"Choose correct alignment for document",
+        options:["Left Align","Center Align","Justified"],
+        answer:2,
+        action:()=>{
+            document.getElementById("doc").style.textAlign="justify";
+        }
+    },
+
+    {
+        q:"Improve readability using spacing",
+        options:["Increase line spacing","Add spaces manually","Press Enter many times"],
+        answer:0,
+        action:()=>{
+            document.getElementById("doc").style.lineHeight="1.8";
+        }
+    },
+
+    {
+        q:"Improve text appearance",
+        options:["Change font & size","Delete text","Make ALL CAPS"],
+        answer:0,
+        action:()=>{
+            let doc = document.getElementById("doc");
+            doc.style.fontFamily="Georgia";
+            doc.style.fontSize="18px";
+        }
+    },
+
+    {
+        q:"Add correct Footer",
+        options:["Add Page Number","Write text Footer","Ignore Footer"],
+        answer:0,
+        action:()=>{
+            let doc = document.getElementById("doc");
+            doc.innerHTML = doc.innerHTML.replace("(No footer)", "");
+            doc.innerHTML += "<hr><div style='text-align:center;'>Page 1</div>";
+        }
+    }
+];
+
+// Load Step
+function loadStep(){
+    if(step >= steps.length){
+        winGame();
+        return;
+    }
+
+    let s = steps[step];
+    let actions = document.getElementById("actions");
+    actions.innerHTML = "<h3>"+s.q+"</h3>";
+
+    s.options.forEach((opt,i)=>{
+        let btn=document.createElement("button");
+        btn.className="btn";
+        btn.innerText=opt;
+
+        btn.onclick=()=>{
+            if(i===s.answer){
+                score++;
+                playSound("correct");
+                s.action();
+                step++;
+            } else {
+                playSound("wrong");
+            }
+            document.getElementById("score").innerText="Score: "+score;
+            loadStep();
+        };
+
+        actions.appendChild(btn);
+    });
+}
+
+// Start Game
+function startGame(){
+    document.getElementById("startScreen").style.display="none";
+    document.getElementById("gameArea").style.display="block";
+    loadStep();
+}
+
+// Restart (direct start)
+function restartGame(){
+    score = 0;
+    step = 0;
+
+    document.getElementById("restart").style.display="none";
+    document.getElementById("score").innerText="Score: 0";
+
+    document.getElementById("doc").innerHTML = `
+        <b>WRONG DOCUMENT</b><br><br>
+        (No header)<br><br>
+        this is a sample text with bad formatting. spacing is wrong.<br><br>
+        text is not aligned properly<br><br>
+        (No footer)
+    `;
+
+    loadStep();
+}
+
+// Win
+function winGame(){
+    let doc = document.getElementById("doc");
+
+    doc.innerHTML = `
+        <div style="text-align:center; font-weight:bold; font-size:22px;">
+            My Document
+        </div>
+        <hr>
+
+        <div style="text-align:justify; line-height:1.8; font-family:Georgia; font-size:18px;">
+        This is a sample text with proper formatting. The document now looks clean,
+        professional and easy to read.
+        </div>
+
+        <hr>
+        <div style="text-align:center;">
+            Page 1
+        </div>
+    `;
+
+    document.getElementById("actions").innerHTML =
+        "<h2>🏆 Perfect! You created a professional document!</h2>";
+
+    document.getElementById("restart").style.display="inline-block";
+
+    startConfetti();
+}
+
+// Confetti
+const canvas=document.getElementById("confetti");
+const ctx=canvas.getContext("2d");
+
+function resize(){
+    canvas.width=window.innerWidth;
+    canvas.height=window.innerHeight;
+}
+resize();
+window.addEventListener("resize",resize);
+
+let confetti=[];
+
+function startConfetti(){
+    confetti=[];
+    for(let i=0;i<120;i++){
+        confetti.push({
+            x:Math.random()*canvas.width,
+            y:Math.random()*canvas.height,
+            r:Math.random()*6
+        });
+    }
+    animate();
+}
+
+function animate(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    confetti.forEach(c=>{
+        ctx.beginPath();
+        ctx.arc(c.x,c.y,c.r,0,Math.PI*2);
+        ctx.fillStyle="gold";
+        ctx.fill();
+        c.y+=2;
+        if(c.y>canvas.height) c.y=0;
+    });
+    requestAnimationFrame(animate);
+}
+</script>
+
+</body>
+</html>

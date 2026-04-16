@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Binary to Decimal Builder</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    text-align: center;
+}
+
+.container {
+    padding: 20px;
+    max-width: 500px;
+    margin: auto;
+}
+
+h1 {
+    font-size: 26px;
+    margin-bottom: 10px;
+}
+
+.binary-box, .decimal-box {
+    margin: 15px 0;
+    padding: 10px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.1);
+}
+
+.binary {
+    font-size: 28px;
+    letter-spacing: 8px;
+}
+
+.weights button {
+    padding: 12px;
+    margin: 8px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+}
+
+.weights button.active {
+    background: #00ffcc;
+}
+
+/* 🔥 IMPROVED SUBMIT BUTTON */
+.submit-btn {
+    margin-top: 15px;
+    padding: 14px 25px;
+    font-size: 18px;
+    font-weight: bold;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    color: white;
+    background: linear-gradient(45deg, #ff512f, #dd2476);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+}
+
+.submit-btn:hover {
+    transform: scale(1.08);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
+
+.submit-btn:active {
+    transform: scale(0.95);
+}
+
+/* -------------------------------- */
+
+#hint {
+    margin-top: 10px;
+    color: #ffd700;
+}
+
+#result {
+    margin-top: 15px;
+    font-size: 18px;
+}
+
+#restartBtn {
+    margin-top: 15px;
+    padding: 10px 20px;
+    border: none;
+    background: #00c6ff;
+    color: white;
+    border-radius: 8px;
+    display: none;
+    cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>🎮 Binary to Decimal Builder</h1>
+
+    <div class="binary-box">
+        <h3>Binary</h3>
+        <div class="binary" id="binary"></div>
+    </div>
+
+    <div class="weights">
+        <button onclick="toggle(8)">8</button>
+        <button onclick="toggle(4)">4</button>
+        <button onclick="toggle(2)">2</button>
+        <button onclick="toggle(1)">1</button>
+    </div>
+
+    <div id="hint">💡 Hint: Add only where you see 1 (8421 rule)</div>
+
+    <!-- 🔥 Improved Button -->
+    <button class="submit-btn" onclick="checkAnswer()">🚀 Submit Answer</button>
+
+    <div class="decimal-box">
+        <h3>Decimal (Answer)</h3>
+        <div id="decimalAnswer">---</div>
+    </div>
+
+    <div id="result"></div>
+    <button id="restartBtn" onclick="restartGame()">Restart</button>
+</div>
+
+<canvas id="confetti"></canvas>
+
+<audio id="correctSound" src="correct.mp3"></audio>
+<audio id="wrongSound" src="wrong.mp3"></audio>
+
+<script>
+const questions = [
+    { binary: "1001", answer: 9 },
+    { binary: "1100", answer: 12 },
+    { binary: "1010", answer: 10 },
+    { binary: "1111", answer: 15 }
+];
+
+let current = 0;
+let selected = [];
+let score = 0;
+
+function loadQuestion() {
+    selected = [];
+    document.querySelectorAll(".weights button").forEach(b => b.classList.remove("active"));
+
+    document.getElementById("binary").innerText = questions[current].binary;
+    document.getElementById("decimalAnswer").innerText = "---";
+    document.getElementById("result").innerText = "";
+}
+
+function toggle(value) {
+    if (selected.includes(value)) {
+        selected = selected.filter(v => v !== value);
+    } else {
+        selected.push(value);
+    }
+
+    document.querySelectorAll(".weights button").forEach(btn => {
+        btn.classList.toggle("active", selected.includes(parseInt(btn.innerText)));
+    });
+}
+
+function checkAnswer() {
+    let sum = selected.reduce((a,b)=>a+b,0);
+    let correct = questions[current].answer;
+
+    document.getElementById("decimalAnswer").innerText = correct;
+
+    if (sum === correct) {
+        document.getElementById("correctSound").play();
+        document.getElementById("result").innerText = "✅ Correct!";
+        score++;
+    } else {
+        document.getElementById("wrongSound").play();
+        document.getElementById("result").innerText = "❌ Wrong! Correct answer shown above.";
+    }
+
+    current++;
+
+    setTimeout(() => {
+        if (current < questions.length) {
+            loadQuestion();
+        } else {
+            document.getElementById("result").innerText = "🎉 Game Over! Score: " + score;
+            document.getElementById("restartBtn").style.display = "inline-block";
+            startConfetti();
+        }
+    }, 1500);
+}
+
+function restartGame() {
+    current = 0;
+    score = 0;
+    stopConfetti();
+    document.getElementById("restartBtn").style.display = "none";
+    loadQuestion();
+}
+
+// Confetti
+const canvas = document.getElementById("confetti");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let confetti = [];
+
+function startConfetti() {
+    for (let i = 0; i < 150; i++) {
+        confetti.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            r: Math.random() * 6
+        });
+    }
+    drawConfetti();
+}
+
+function drawConfetti() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    confetti.forEach(c=>{
+        ctx.beginPath();
+        ctx.arc(c.x,c.y,c.r,0,Math.PI*2);
+        ctx.fillStyle = "hsl(" + Math.random()*360 + ",100%,50%)";
+        ctx.fill();
+        c.y += 2;
+        if(c.y > canvas.height) c.y = 0;
+    });
+    requestAnimationFrame(drawConfetti);
+}
+
+function stopConfetti() {
+    confetti = [];
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+}
+
+loadQuestion();
+</script>
+
+</body>
+</html>

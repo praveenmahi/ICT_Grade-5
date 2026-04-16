@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Babbage Adventure</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #1d2671, #c33764);
+    color: white;
+    text-align: center;
+}
+
+.container {
+    padding: 20px;
+    max-width: 800px;
+    margin: auto;
+}
+
+h1 {
+    font-size: 2rem;
+}
+
+.story {
+    font-size: 1.2rem;
+    margin: 20px 0;
+}
+
+.options {
+    margin-top: 20px;
+}
+
+.btn {
+    display: block;
+    background: white;
+    color: black;
+    margin: 10px auto;
+    padding: 12px;
+    border-radius: 10px;
+    width: 80%;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn:hover {
+    background: #ffd166;
+}
+
+#restart {
+    display: none;
+    margin-top: 20px;
+    padding: 12px;
+    border-radius: 10px;
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="confetti"></canvas>
+
+<div class="container">
+    <h1>🧠 Help Babbage Build the Computer!</h1>
+    <div class="story" id="story"></div>
+    <div class="options" id="options"></div>
+    <button id="restart" onclick="restartGame()">Restart Adventure</button>
+</div>
+
+<audio id="correctSound" src="correct.mp3"></audio>
+<audio id="wrongSound" src="wrong.mp3"></audio>
+
+<script>
+let step = 0;
+
+const storyData = [
+{
+text: "👴 You meet Charles Babbage. He wants to build a powerful machine! First, he asks: What was the earliest calculating device?",
+options: ["Abacus", "Pascaline"],
+correct: "Abacus"
+},
+{
+text: "🎉 Correct! Now Babbage needs inspiration. Which machine was invented by Blaise Pascal?",
+options: ["Pascaline", "Analytical Engine"],
+correct: "Pascaline"
+},
+{
+text: "⚙️ Great! Now help Babbage choose the right idea. Which machine design made him famous?",
+options: ["Analytical Engine", "Abacus"],
+correct: "Analytical Engine"
+},
+{
+text: "💡 Ada Lovelace joins you! What concept did she introduce?",
+options: ["Binary Numbers", "Vacuum Tubes"],
+correct: "Binary Numbers"
+},
+{
+text: "⚡ Now choose the correct technology for early computers:",
+options: ["Vacuum Tubes", "Artificial Intelligence"],
+correct: "Vacuum Tubes"
+},
+{
+text: "🚀 Final Step! Choose the future technology:",
+options: ["Artificial Intelligence", "Abacus"],
+correct: "Artificial Intelligence"
+}
+];
+
+// 🔀 Shuffle function
+function shuffleArray(array) {
+    return array.sort(() => Math.random() - 0.5);
+}
+
+function loadStep(){
+    if(step >= storyData.length){
+        winGame();
+        return;
+    }
+
+    document.getElementById("story").innerText = storyData[step].text;
+
+    // 🔀 Shuffle options each time
+    let shuffledOptions = shuffleArray([...storyData[step].options]);
+
+    let optionsHTML = "";
+    shuffledOptions.forEach(opt=>{
+        optionsHTML += `<div class="btn" onclick="checkAnswer('${opt}')">${opt}</div>`;
+    });
+
+    document.getElementById("options").innerHTML = optionsHTML;
+}
+
+function checkAnswer(answer){
+    if(answer === storyData[step].correct){
+        document.getElementById("correctSound").play();
+        step++;
+        loadStep();
+    } else {
+        document.getElementById("wrongSound").play();
+    }
+}
+
+function winGame(){
+    document.getElementById("story").innerText = "🎉 Congratulations! You helped Babbage build the computer!";
+    document.getElementById("options").innerHTML = "";
+    document.getElementById("restart").style.display = "inline-block";
+    confetti();
+}
+
+function restartGame(){
+    step = 0;
+    document.getElementById("restart").style.display = "none";
+    loadStep();
+}
+
+// Confetti
+function confetti(){
+    const canvas = document.getElementById("confetti");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let pieces = [];
+    for(let i=0;i<120;i++){
+        pieces.push({
+            x: Math.random()*canvas.width,
+            y: Math.random()*canvas.height,
+            size: Math.random()*8+4,
+            speed: Math.random()*3+2
+        });
+    }
+
+    function draw(){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = "yellow";
+
+        pieces.forEach(p=>{
+            ctx.fillRect(p.x,p.y,p.size,p.size);
+            p.y += p.speed;
+            if(p.y > canvas.height) p.y = 0;
+        });
+
+        requestAnimationFrame(draw);
+    }
+
+    draw();
+}
+
+loadStep();
+</script>
+
+</body>
+</html>
